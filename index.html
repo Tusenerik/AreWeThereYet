@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -33,7 +32,7 @@ color: white;
   <button onclick="writeInDocument()">Get Distance</button>
    <p id="OutDist">Output: [Write the latitude and longitude of your destination and click the button!]</p>
   	
-    <script>
+<script>
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   const R = 6371; // Earth's radius in kilometers
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -45,20 +44,35 @@ function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c; // Distance in kilometers
 }
-function currentPositionToTargetPosition() {
-	targetLat = document.getElementById("InputLatitude").value;
-	targetLon = document.getElementById("InputLongitude").value;
-    navigator.geolocation.getCurrentPosition((pos) => {
-      distance = getDistanceFromLatLonInKm(pos.coords.latitude, pos.coords.longitude, targetLat, targetLon);
-      return(distance);
-    });
-	
-}
 
 function writeInDocument() {
-  finaldistance = document.getElementById("OutDist");
-  finaldistance.innerHTML = "Output: " + currentPositionToTargetPosition + "km."();
+  const targetLat = parseFloat(document.getElementById("InputLatitude").value);
+  const targetLon = parseFloat(document.getElementById("InputLongitude").value);
+  const finaldistance = document.getElementById("OutDist");
+
+  if (isNaN(targetLat) || isNaN(targetLon)) {
+    finaldistance.innerHTML = "Output: Please enter valid latitude and longitude!";
+    return;
+  }
+
+  if (!navigator.geolocation) {
+    finaldistance.innerHTML = "Output: Geolocation is not supported by your browser.";
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const userLat = pos.coords.latitude;
+      const userLon = pos.coords.longitude;
+      const distance = getDistanceFromLatLonInKm(userLat, userLon, targetLat, targetLon);
+      finaldistance.innerHTML = "Output: " + distance.toFixed(2) + " km.";
+    },
+    (err) => {
+      finaldistance.innerHTML = "Output: Could not get your location.";
+    }
+  );
 }
-    </script>
+</script>
+
   </body>
 </html>
