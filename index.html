@@ -18,6 +18,11 @@
         background-color: green;
         color: white;
       }
+      select {
+        border-radius: 5px;
+        margin-top: 5px;
+        margin-bottom: 5px;
+      }
     </style>
   </head>
   <body>
@@ -26,6 +31,19 @@
     <input type="text" id="InputLatitude" placeholder="Destination Latitude">
     <br>
     <input type="text" id="InputLongitude" placeholder="Destination Longitude">
+    <br>
+    <label for="unitSelect">Choose unit:</label>
+    <select id="unitSelect">
+      <option value="mil">Mil (10 km)</option>
+      <option value="km">Kilometers</option>
+      <option value="m">Meters</option>
+      <option value="cm">Centimeters</option>
+      <option value="mm">Millimeters</option>
+      <option value="mi">Miles</option>
+      <option value="ft">Feet</option>
+      <option value="in">Inches</option>
+    </select>
+    <br>
     <button onclick="startDistanceUpdates()">Get Distance</button>
     <button onclick="stopDistanceUpdates()">Stop</button>
     <p id="OutDist">Output: [Write the latitude and longitude of your destination and click the button!]</p>
@@ -47,9 +65,33 @@
         return R * c; // Distance in kilometers
       }
 
+      function convertDistance(km, unit) {
+        switch(unit) {
+          case "mil": // Swedish/Norwegian mil (10km)
+            return {value: km/10, label: "mil", precision: 3};
+          case "km":
+            return {value: km, label: "km", precision: 5};
+          case "m":
+            return {value: km*1000, label: "meters", precision: 2};
+          case "cm":
+            return {value: km*100000, label: "cm", precision: 0};
+          case "mm":
+            return {value: km*1000000, label: "mm", precision: 0};
+          case "mi":
+            return {value: km*0.621371, label: "miles", precision: 5};
+          case "ft":
+            return {value: km*3280.84, label: "feet", precision: 2};
+          case "in":
+            return {value: km*39370.1, label: "inches", precision: 2};
+          default:
+            return {value: km, label: "km", precision: 5};
+        }
+      }
+
       function startDistanceUpdates() {
         const targetLat = parseFloat(document.getElementById("InputLatitude").value);
         const targetLon = parseFloat(document.getElementById("InputLongitude").value);
+        const unit = document.getElementById("unitSelect").value;
         const finaldistance = document.getElementById("OutDist");
 
         if (isNaN(targetLat) || isNaN(targetLon)) {
@@ -62,10 +104,8 @@
           return;
         }
 
-        // Stop any previous watchers/intervals
         stopDistanceUpdates();
 
-        // Start watching position
         watchId = navigator.geolocation.watchPosition(
           (pos) => {
             latestPosition = pos;
@@ -80,13 +120,13 @@
           }
         );
 
-        // Update distance every 0.1 seconds (100 ms)
         intervalId = setInterval(() => {
           if (latestPosition) {
             const userLat = latestPosition.coords.latitude;
             const userLon = latestPosition.coords.longitude;
-            const distance = getDistanceFromLatLonInKm(userLat, userLon, targetLat, targetLon);
-            finaldistance.innerHTML = "Output: " + (distance * 1000).toFixed(2) + " meters.";
+            const distanceKm = getDistanceFromLatLonInKm(userLat, userLon, targetLat, targetLon);
+            const converted = convertDistance(distanceKm, unit);
+            finaldistance.innerHTML = `Output: ${converted.value.toFixed(converted.precision)} ${converted.label}.`;
           }
         }, 100);
       }
